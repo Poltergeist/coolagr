@@ -173,7 +173,7 @@ var s, App= {
 			if (error) {
 				return this.showError(error);
 			}else{
-				window.location=window.location.origin+'#start';
+				window.location=window.location.origin+window.location.pathname+'#start';
 			}
 		});
 
