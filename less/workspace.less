@@ -1,6 +1,7 @@
 .image{
 	img{
 		width:100px;
+		background:fade(@white,90%);
 		-webkit-touch-callout: none;
 		-webkit-user-select: none;
 		-khtml-user-select: none;
@@ -18,7 +19,6 @@
 	box-shadow:1px 1px 5px slategray;
 	&:hover{
 		box-shadow: 0 0 10px @blue;
-		z-index:1;
 		i{
 			display:block;
 		}
@@ -30,7 +30,7 @@
 		line-height: 20px;
 		text-align:center;
 		display:none;
-		background:slategray;
+		#gradient .vertical(lighten(slategray,30%),slategray);
 		cursor:pointer;
 		-webkit-touch-callout: none;
 		-webkit-user-select: none;
@@ -58,5 +58,15 @@
 		margin-left:-10px;
 		margin-top:-20px;
 
+	}
+	.lvlUp{
+		top:50%;
+		left:100%;
+		margin-top:-30px;
+	}
+	.lvlDwn{
+		top:50%;
+		left:100%;
+		margin-top:10px;
 	}
 }

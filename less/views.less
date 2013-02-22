@@ -1,12 +1,25 @@
-.splash,.workspace,.help,.protos{
+.splash,.workspace,.help,.protos,.menu,.start,.loading{
 	display:none;
+}
+.loading{
+	z-index:1000;
+	color:@grayDark;
+	position:absolute;
+	top:50%;
+	left:50%;
+	margin-left:-180px;
+	margin-top:-50px;
+	padding:50px 150px;
+	border:1px slategray solid;
+	#gradient .striped(@blue);
+	.box-shadow(2px 2px 5px @grayDark);
 }
 .active{
 	display:block;
 }
 .workspace{
 	height:93%;
-	margin:6%  1% 1%;
+	margin:3%  1% 1%;
 	width:98%;
 	background:slategray;
 	position:absolute;
@@ -20,4 +33,53 @@
 	-moz-user-select: none;
 	-ms-user-select: none;
 	user-select: none;
+}
+
+.splash,.start{
+	width:90%;
+	height:90%;
+	position:absolute;
+	top:5%;
+	left:5%;
+	#gradient .vertical(slategray,lighten(slategray,15%));
+	.border-radius( 15px );
+	.box-shadow(0 0 25px darken(slategray,35%));
+	padding:15px;
+	.box-sizing(border-box);
+	border:1px solid darken(slategray,15%);
+	overflow:scroll;
+	h1{
+		text-align:center;
+		text-shadow:1px 1px 2px lighten(@blue,25%);
+		color:@grayDark;
+	}
+	.login{
+		margin:auto;
+		display:block;
+		margin-top:40px;
+	}
+}
+.start{
+	.half{
+		width:50%;
+		height:100%;
+		.box-sizing(border-box);
+		margin:0;
+		float:left;
+		padding:15px;
+		h2{
+			text-shadow:1px 1px @grayLight;
+			text-align:center;
+		}
+		&:first-child{
+			border-right:1px solid slategray;
+		}
+		li{
+			display:block;
+			cursor:pointer;
+			&:hover{
+				background:darken(slategray,15%);
+			}
+		}
+	}
 }

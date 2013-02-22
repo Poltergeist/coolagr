@@ -6,8 +6,38 @@
 	<link media="all" rel="stylesheet" href="css/style.css" type="text/css" />
 </head>
 <body>
+	<div class="loading">
+		<p>
+		Loading
+		</p>
+		<p class="actions"></p>
+	</div>
 	<div class="splash">
 		<h1>This is Coolagr</h1>
+		<p>Collagr is a application for creating collages of pictures that can be done directly in your browser. All images will be uploaded to your Dropbox. This is also where the collages will be saved in a common programming format known as json. There is no server involved where your data is stored. But as long as you don't delete your /apps/collagr folder from your Dropbox you are good to go.</p>
+		<h2>First Steps</h2>
+		<ol>
+			<li>Log in with your Dropbox account</li>
+			<li>Create a collage and name it.</li>
+			<li>Drag and drop files from your computer on to your collagr window and then you can move all your image around.</li>
+			<li>When you are happy with your piece of art save it.</li>
+		</ol>
+		<button class="btn btn-success login">Login with Dropbox</button>
+	</div>
+	<div class="start">
+		<div class="half">
+		<h2>Load</h2>
+		<ul class="artboards">
+
+		</ul>
+		</div>
+		<div class="half">
+		<h2>Create</h2>
+		<div>
+			<input id="artboard" name="" type="text" />
+		</div>
+		<button class="btn createArt">Create Artboard</button>
+		</div>
 	</div>
 	<div class="workspace">
 		&nbsp;
@@ -19,9 +49,7 @@
 	<div class="menu">
 		<ul>
 			<li><a href="#save" class="save">Save</a></li>
-			<li><a href="#load" class="load">Load</a></li>
-			<li><a href="#help">Help</a></li>
-			<li><a id="login" href="#help">Login</a></li>
+			<li><a href="#start" class="load">Load</a></li>
 		</ul>
 
 	</div>
@@ -30,6 +58,8 @@
 			<img src="" alt="" draggable="false"/>
 			<i class="rotate">r</i>
 			<i class="scale">s</i>
+			<i class="lvlUp">+</i>
+			<i class="lvlDwn">-</i>
 		</div>
 	</div>
 

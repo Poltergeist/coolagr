@@ -1,9 +1,14 @@
 var s, App= {
 
 	settings: {
+		load: $("body > .loading"),
+		actionText: $('.actions'),
 		workspace: $("body > .workspace"),
 		menu: $('body > .menu'),
+		splash: $('body > .splash'),
+		start: $('body > .start'),
 		proto: $('body > .protos'),
+		boardList: $('.artboards'),
 		protos: {
 			img:$('.protos .image')
 		},
@@ -13,24 +18,30 @@ var s, App= {
 		currentEvent:false,
 		currentTarget:false,
 		currentOffset:false,
-		autoSave:false
+		userSettings:{},
+		autoSave:false,
+		currentArtboard:null,
+		actions:0
+
 	},
 
 	init: function() {
 		this.settings.client = new Dropbox.Client(this.settings.appKey);
 		s = this.settings;
 		s.client.authDriver(new Dropbox.Drivers.Redirect({rememberUser: true,useQuery:true}));
-		if(this.settings.client){
-		}
 		this.bindUIActions();
-		this.loginDropbox();
+		this.relocate();
 		if(s.client.isAuthenticated()){
 			window.location.hash="#start"
 			s.workspace.addClass('active');
+		}else{
+			//this.loginDropbox();
+			window.location.hash="#welcome"
 		}
+		//console.log ( s.client.isAuthenticated() )
 	},
 	bindUIActions: function() {
-		$('#login').click(this.loginDropbox);
+		$('#login,.login').click(this.loginDropbox);
 		s.workspace.on('dragover dragenter',this.stopEvents);
 		s.workspace.on('drop',this.uploadFiles);
 		s.workspace.on('addClip',this.addClip);
@@ -43,26 +54,85 @@ var s, App= {
 		s.workspace.on('mousedown','.scale',function(e){
 			s.currentEvent = 'scale';
 			s.currentTarget = $(e.target).parents('.item');
-			s.currentTarget.find('img').width('200px');
+		});
+		s.workspace.on('mousedown','.lvlUp',function(e){
+			s.currentTarget = $(e.target).parents('.item');
+			s.currentTarget.insertAfter(s.currentTarget.next());
+		});
+		s.workspace.on('mousedown','.lvlDwn',function(e){
+			s.currentTarget = $(e.target).parents('.item');
+			s.currentTarget.insertBefore(s.currentTarget.prev());
 		});
 		s.workspace.on('mousedown','.item img',function(e){
 			s.currentEvent = 'move';
 			s.currentTarget = $(e.target).parents('.item');
 		});
+		s.boardList.on('click','li',this.setCurrentBoard)
 		s.menu.on('click','.save',this.saveArt);
-		s.menu.on('click','.load',this.fileList);
 		$(document).mouseup(function (e) {
 			s.currentEvent = false;
 			s.currentTarget = false;
 			s.currentOffset = false;
 		});
 		$(document).bind('mousemove',this.manipulate);
+		$(window).on('hashchange', this.relocate);
+		$('.createArt').on('click',this.createNewBoard);
+	},
+	createNewBoard: function(e){
+		s.currentArtboard = $('#artboard').val()+'.json';
+		$('#artboard').val('');
+		s.client.writeFile("boards/"+s.currentArtboard,JSON.stringify([]), function(error, stat) {
+			if(error){
+				App.showError({e:error,loc:'create'})
+			}
+			window.location.hash='board'
+		});
+	},
+	setCurrentBoard: function(e){
+		var tar = $(e.target);
+		s.currentArtboard = tar.attr('data-board');
+		window.location.hash='board'
+	},
+	relocate: function(){
+		var hash = window.location.hash;
+		$('body > div.active').removeClass('active');
+		switch(hash){
+			case '#welcome':
+				s.splash.addClass('active');
+				break;
+			case '#start':
+				s.start.addClass('active');
+				App.fileList();
+				break;
+			case '#board':
+				s.workspace.addClass('active');
+				s.menu.addClass('active');
+				App.loadArt('',s.currentArtboard);
+				break;
+			default:
+				break;
+		}
 	},
 	fileList: function(e){
-		s.workspace.trigger('loadArt',"1.json");
+		$('.artboards').empty();
+		s.client.readdir("/boards",function(error,list){
+			var file, _i, _len , re ;
+			re = /.json$/;
+			if(error){
+				if(error.status==404){
+					s.client.mkdir('boards')
+				}
+			}else{
+				for (_i = 0, _len = list.length; _i < _len; _i++) {
+					file = list[_i];
+					$('.artboards').append($('<li></li>').text(file.replace(re,"")).attr('data-board',file))
+				}
+			}
+		})
 	},
-	saveArt: function(){
+	saveArt: function(e){
 		var items,store;
+		e.preventDefault();
 		items=s.workspace.find('.item');
 		store = [];
 		items.each(function(){
@@ -79,24 +149,29 @@ var s, App= {
 				path: $this.find('img').attr('data-path')
 			})
 		});
-		s.client.writeFile("1.json",JSON.stringify(store), function(error, stat) {
+		s.client.writeFile("boards/"+s.currentArtboard,JSON.stringify(store), function(error, stat) {
 			console.log('stored');
+			window.location.hash = 'board'
 		})
 
 	},
 	loadArt: function(e,filename){
 		s.workspace.empty();
-		console.log('loading');
-		s.client.readFile(filename,function(error,content){
-			console.log('loaded');
+		console.log('filename',filename)
+		s.client.readFile("boards/"+filename,function(error,content){
 			var items, item, _i, _len ;
 			if(error){
-				return App.showError(error);
+				return App.showError({e:error,'loc':'load'});
 			}
 			items = JSON.parse(content);
 			s.styles =[]
+			if(items.length!=0){
+				s.load.addClass('active');
+			}
 			for (_i = 0, _len = items.length; _i < _len; _i++) {
 				item = items[_i];
+				s.actions++;
+				s.actionText.text(s.actions + ' to go');
 
 				//s.styles[item.path]=item.style
 
@@ -108,6 +183,11 @@ var s, App= {
 						info.style = item.style
 						info.imgstyle = item.imgstyle?item.imgstyle:{};
 						s.workspace.trigger('loadClip',info);
+						s.actions--;
+						s.actionText.text(s.actions + ' to go');
+						if(s.actions==0){
+							s.load.removeClass('active');
+						}
 					});
 				})(item)
 
@@ -139,19 +219,27 @@ var s, App= {
 		var file, _i, _len ;
 		e.preventDefault();
 		e.stopPropagation();
+		s.load.addClass('active');
 		if (e.originalEvent.dataTransfer) {
 			if (e.originalEvent.dataTransfer.files.length) {
 				/*UPLOAD FILES HERE*/
 				for (_i = 0, _len = e.originalEvent.dataTransfer.files.length; _i < _len; _i++) {
 					file = e.originalEvent.dataTransfer.files[_i];
+					s.actions++;
+					s.actionText.text(s.actions + ' to go');
 
-					s.client.writeFile(file.name,file, function(error, stat) {
+					s.client.writeFile(s.currentArtboard + '/' + file.name,file, function(error, stat) {
 						if (error) {
 							return console.log(error);  // Something went wrong.
 						}
 						s.client.makeUrl(stat.path,{download:true},function(error,info){
 							info.path = stat.path
 							s.workspace.trigger('addClip',info);
+							s.actions--
+							s.actionText.text(s.actions + ' to go');
+							if(s.actions==0){
+								s.load.removeClass('active');
+							}
 						});
 					});
 				}
@@ -169,13 +257,18 @@ var s, App= {
 		}
 	},
 	loginDropbox: function(){
+		if(!s.client.isAuthenticated()){
 		return s.client.authenticate(function(error, data) {
 			if (error) {
-				return this.showError(error);
+				return App.showError(error);
 			}else{
 				window.location=window.location.origin+window.location.pathname+'#start';
 			}
 		});
+		}else{
+				window.location=window.location.origin+window.location.pathname+'#start';
+
+		}
 
 	},
 
@@ -211,6 +304,17 @@ var s, App= {
 			var maxWidth = s.workspace.innerWidth() - img.outerWidth() - 10;
 			var maxHeight= s.workspace.innerHeight() - img.outerHeight() - 10;
 			img.css({'left':( leftPos >= 0 && leftPos < maxWidth ?leftPos:leftPos > maxWidth? maxWidth:0 ) ,'top':( topPos >= 0 && topPos <= maxHeight?topPos:topPos>maxHeight?maxHeight:0 ) });
+		}
+		if(s.currentEvent==='scale'){
+			var img = s.currentTarget.find('img');
+			var width = e.pageX - parseInt(s.currentTarget.css('border-left-width')) - img.offset().left;
+
+
+			/*var leftPos = e.pageX - s.currentOffset.left ;
+			var topPos = e.pageY - s.currentOffset.top;
+			var maxWidth = s.workspace.innerWidth() - img.outerWidth() - 10;
+			var maxHeight= s.workspace.innerHeight() - img.outerHeight() - 10;*/
+			img.css('width',width);
 		}
 	}
 
