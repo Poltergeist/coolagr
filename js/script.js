@@ -262,6 +262,7 @@ var s, App= {
 			if (error) {
 				return App.showError(error);
 			}else{
+				s.client = data;
 				window.location=window.location.origin+window.location.pathname+'#start';
 			}
 		});
